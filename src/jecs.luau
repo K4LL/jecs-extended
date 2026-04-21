@@ -203,6 +203,7 @@ type world = {
 	remove: (self: world, id: i53, component: i53) -> (),
 	get: (world, ...i53) -> (),
 	has: (world, ...i53) -> boolean,
+	get_component_count: (world, entity: i53) -> number,
 	parent: (self: world, entity: i53) -> i53?,
 	contains: (self: world, entity: i53) -> boolean,
 	exists: (self: world, entity: i53) -> boolean,
@@ -291,6 +292,9 @@ export type World = {
 		& (<T, a, b>(World, Entity<T>, Component<a>, Component<a>) -> boolean)
 		& (<T, a, b, c>(World, Entity<T>, Component<a>, Component<b>, Component<c>) -> boolean)
 		& <T, a, b, c, d>(World, Entity<T>, Component<a>, Component<b>, Component<c>, Component<d>) -> boolean,
+
+	-- Gets the number of components on the entity.
+	get_component_count: <T>(world: World, entity: Entity<T>) -> number,
 
 	--- Get parent (target of ChildOf relationship) for entity. If there is no ChildOf relationship pair, it will return nil.
 	parent: <T>(self: World, entity: Entity<T>) -> Entity?,
@@ -3112,6 +3116,16 @@ local function world_new(DEBUG: boolean?)
 		end
 	end
 
+	local function world_get_component_count(world: world, entity: i53): number
+		local record = entity_index_try_get_unsafe(entity)
+		if not record then
+			return 0
+		end
+
+		local archetype = record.archetype
+		return #archetype.types
+	end
+
 	type Listener<T> =
 		& ((e: i53, id: i53, value: T, oldarchetype: archetype) -> ())
 		& ((e: i53, id: i53, delete: boolean?) -> ())
@@ -3781,6 +3795,7 @@ local function world_new(DEBUG: boolean?)
 	world.set = world_set
 	world.get = world_get :: any
 	world.has = world_has :: any
+	world.get_component_count = world_get_component_count
 	world.target = world_target
 	world.targets = world_targets
 	world.parent = world_parent
